@@ -1,0 +1,17 @@
+{
+  "name": "auth-service",
+  "version": "0.1.0",
+  "description": "Fastify authentication service with RBAC.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "@fastify/jwt": "^9.2.0",
+    "argon2": "^0.31.2",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.28.1",
+    "fastify-plugin": "^4.5.1"
+  }
+}
