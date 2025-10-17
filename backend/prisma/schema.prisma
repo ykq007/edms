@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String             @id @default(uuid()) @db.Uuid @map("id")
+  email            String             @unique(map: "users_email_key") @map("email")
+  displayName      String?            @map("display_name")
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt        DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  roles            UserRole[]
+  documents        Document[]         @relation("DocumentOwner")
+  documentVersions DocumentVersion[]  @relation("DocumentVersionCreatedBy")
+  auditLogs        AuditLog[]         @relation("AuditLogActor")
+  analyticsEvents  AnalyticsEvent[]   @relation("AnalyticsEventUser")
+
+  @@map("users")
+}
+
+model Role {
+  id          Int        @id @default(autoincrement()) @map("id")
+  name        String     @unique(map: "roles_name_key") @map("name")
+  description String?    @map("description")
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  users       UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId     String   @map("user_id") @db.Uuid
+  roleId     Int      @map("role_id")
+  assignedAt DateTime @default(now()) @map("assigned_at") @db.Timestamptz(6)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([userId, roleId], map: "pk_user_roles")
+  @@index([roleId], map: "idx_user_roles_role_id")
+  @@map("user_roles")
+}
+
+model Document {
+  id              String            @id @default(uuid()) @db.Uuid @map("id")
+  title           String            @map("title")
+  slug            String?           @map("slug")
+  status          String            @default("draft") @map("status")
+  ownerId         String            @map("owner_id") @db.Uuid
+  summary         String?           @map("summary")
+  metadata        Json?             @map("metadata")
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  publishedAt     DateTime?         @map("published_at") @db.Timestamptz(6)
+  owner           User              @relation("DocumentOwner", fields: [ownerId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  versions        DocumentVersion[]
+  auditLogs       AuditLog[]        @relation("AuditLogDocument")
+  analyticsEvents AnalyticsEvent[]  @relation("AnalyticsEventDocument")
+
+  @@map("documents")
+  @@unique([slug], map: "idx_documents_slug")
+  @@index([ownerId], map: "idx_documents_owner_id")
+}
+
+model DocumentVersion {
+  id            String    @id @default(uuid()) @db.Uuid @map("id")
+  documentId    String    @map("document_id") @db.Uuid
+  versionNumber Int       @default(1) @map("version_number")
+  content       Json      @map("content")
+  summary       String?   @map("summary")
+  createdById   String?   @map("created_by_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  document      Document  @relation(fields: [documentId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdBy     User?     @relation("DocumentVersionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  auditLogs     AuditLog[] @relation("AuditLogDocumentVersion")
+
+  @@map("document_versions")
+  @@unique([documentId, versionNumber], map: "idx_document_versions_unique_version")
+  @@index([createdById], map: "idx_document_versions_created_by_id")
+}
+
+model AuditLog {
+  id                 String           @id @default(uuid()) @db.Uuid @map("id")
+  action             String           @map("action")
+  actorId            String?          @map("actor_id") @db.Uuid
+  documentId         String?          @map("document_id") @db.Uuid
+  documentVersionId  String?          @map("document_version_id") @db.Uuid
+  entityType         String           @map("entity_type")
+  entityId           String           @map("entity_id")
+  metadata           Json?            @map("metadata")
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  actor              User?            @relation("AuditLogActor", fields: [actorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  document           Document?        @relation("AuditLogDocument", fields: [documentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  documentVersion    DocumentVersion? @relation("AuditLogDocumentVersion", fields: [documentVersionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("audit_logs")
+  @@index([actorId], map: "idx_audit_logs_actor_id")
+  @@index([documentId], map: "idx_audit_logs_document_id")
+  @@index([documentVersionId], map: "idx_audit_logs_document_version_id")
+}
+
+model AnalyticsEvent {
+  id         String    @id @default(uuid()) @db.Uuid @map("id")
+  eventType  String    @map("event_type")
+  userId     String?   @map("user_id") @db.Uuid
+  documentId String?   @map("document_id") @db.Uuid
+  occurredAt DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  properties Json?     @map("properties")
+  user       User?     @relation("AnalyticsEventUser", fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  document   Document? @relation("AnalyticsEventDocument", fields: [documentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("analytics_events")
+  @@index([userId], map: "idx_analytics_events_user_id")
+  @@index([documentId], map: "idx_analytics_events_document_id")
+  @@index([occurredAt], map: "idx_analytics_events_occurred_at")
+}
