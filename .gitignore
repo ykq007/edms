@@ -6,6 +6,7 @@
 # Dependency directories
 node_modules/
 vendor/
+dist/
 
 # Python artifacts
 __pycache__/
@@ -15,6 +16,7 @@ __pycache__/
 *.log
 *.tmp
 *.swp
+storage/
 
 # Editor directories
 .vscode/
