@@ -1,0 +1,15 @@
+system_log:
+  log_level: info
+
+etcd:
+  use_embedded: true
+
+minio:
+  address: 127.0.0.1
+  access_key_id: minioadmin
+  secret_access_key: minioadmin
+  use_ssl: false
+
+storage:
+  type: local
+  path: /var/lib/milvus
