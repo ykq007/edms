@@ -5,6 +5,7 @@
 
 # Dependency directories
 node_modules/
+dist/
 vendor/
 
 # Python artifacts
