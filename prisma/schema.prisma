@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DocumentStatus {
+  UPLOADING
+  UPLOADED
+  OCR_QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Document {
+  id             String         @id @default(uuid())
+  status         DocumentStatus @default(UPLOADING)
+  originalName   String?
+  mimeType       String?
+  size           BigInt?
+  checksum       String?
+  storagePath    String?
+  ocrQueuedAt    DateTime?
+  ocrCompletedAt DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  error          String?
+}
