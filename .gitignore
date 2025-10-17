@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+.pnpm/
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Environment
+.env
+
+# Logs
+*.log
+pnpm-debug.log*
+
+# IDEs and editors
+.vscode/
+.idea/
+.DS_Store
